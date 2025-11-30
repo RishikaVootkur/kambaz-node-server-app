@@ -5,7 +5,7 @@ import ModulesDao from "../Modules/dao.js";
 export default function CourseRoutes(app, db) {
   const dao = CoursesDao(db);
   const enrollmentsDao = EnrollmentsDao(db);
-  const modulesDao = ModulesDao(db);
+  const modulesDao = ModulesDao();
 
   const findAllCourses = (req, res) => {
     const courses = dao.findAllCourses();

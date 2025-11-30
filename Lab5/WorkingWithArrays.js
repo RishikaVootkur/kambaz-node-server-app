@@ -1,9 +1,9 @@
 let todos = [
-    { id: 1, title: "Task 1", completed: false },
-    { id: 2, title: "Task 2", completed: true },
-    { id: 3, title: "Task 3", completed: false },
-    { id: 4, title: "Task 4", completed: true },
-  ];
+  { id: 1, title: "Task 1", description: "Description for Task 1", completed: false },
+  { id: 2, title: "Task 2", description: "Description for Task 2", completed: true },
+  { id: 3, title: "Task 3", description: "Description for Task 3", completed: false },
+  { id: 4, title: "Task 4", description: "Description for Task 4", completed: true },
+];
   
   export default function WorkingWithArrays(app) {
     const getTodos = (req, res) => {
@@ -71,6 +71,28 @@ let todos = [
       todo.title = title;
       res.json(todos);
     };
+
+    const updateTodoCompleted = (req, res) => {
+      const { id, completed } = req.params;
+      const todo = todos.find((t) => t.id === parseInt(id));
+      if (!todo) {
+        res.status(404).json({ message: `Unable to update completed for Todo with ID ${id}` });
+        return;
+      }
+      todo.completed = completed === "true";
+      res.json(todos);
+    };
+    
+    const updateTodoDescription = (req, res) => {
+      const { id, description } = req.params;
+      const todo = todos.find((t) => t.id === parseInt(id));
+      if (!todo) {
+        res.status(404).json({ message: `Unable to update description for Todo with ID ${id}` });
+        return;
+      }
+      todo.description = description;
+      res.json(todos);
+    };
   
     const updateTodo = (req, res) => {
       const { id } = req.params;
@@ -89,6 +111,8 @@ let todos = [
     app.post("/lab5/todos", postNewTodo);
     app.get("/lab5/todos/:id/delete", removeTodo);
     app.get("/lab5/todos/:id/title/:title", updateTodoTitle);
+    app.get("/lab5/todos/:id/completed/:completed", updateTodoCompleted);  // ADD THIS
+    app.get("/lab5/todos/:id/description/:description", updateTodoDescription); 
     app.delete("/lab5/todos/:id", deleteTodo);
     app.put("/lab5/todos/:id", updateTodo);
   }

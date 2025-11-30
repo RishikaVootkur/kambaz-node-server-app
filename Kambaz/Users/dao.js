@@ -1,33 +1,36 @@
+import model from "./model.js";
 import { v4 as uuidv4 } from "uuid";
-export default function UsersDao(db) {
+
+export default function UsersDao() {
   
   const createUser = (user) => {
-    const newUser = { ...user, _id: uuidv4() };
-    db.users.push(newUser);  // ✅ Updates db.users directly!
-    return newUser;
-  };
+  const newUser = { ...user, _id: uuidv4() };
+  return model.create(newUser);
+}
   
-  const findAllUsers = () => db.users;  // ✅ Return from db, not local variable
+  const findAllUsers = () => model.find();
+
+  const findUserById = (userId) => model.findById(userId);
   
-  const findUserById = (userId) => db.users.find((user) => user._id === userId);
+  const findUserByUsername = (username) => model.findOne({ username: username });
   
-  const findUserByUsername = (username) => db.users.find((user) => user.username === username);
+  const findUserByCredentials = (username, password) =>  model.findOne({ username, password });
   
-  const findUserByCredentials = (username, password) =>
-    db.users.find((user) => user.username === username && user.password === password);
-  
-  const updateUser = (userId, userUpdates) => {
-    const user = db.users.find((u) => u._id === userId);
-    if (user) {
-      Object.assign(user, userUpdates);  // ✅ Mutates object directly
-    }
-    return user;
-  };
-  
-  const deleteUser = (userId) => {
-    db.users = db.users.filter((u) => u._id !== userId);  // ✅ Updates db.users
-  };
-  
+  const updateUser = (userId, user) => model.updateOne({ _id: userId }, { $set: user });
+
+  const findUsersByRole = (role) => model.find({ role: role });
+
+  const deleteUser = (userId) => model.findByIdAndDelete( userId );
+
+  const findUsersByPartialName = (partialName) => {
+  const regex = new RegExp(partialName, "i"); 
+
+  return model.find({
+    $or: [{ firstName: { $regex: regex } }, { lastName: { $regex: regex } }],
+  });
+};
+
+
   return {
     createUser,
     findAllUsers,
@@ -36,5 +39,7 @@ export default function UsersDao(db) {
     findUserByCredentials,
     updateUser,
     deleteUser,
+    findUsersByRole,
+    findUsersByPartialName
   };
 }

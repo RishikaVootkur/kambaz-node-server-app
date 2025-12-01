@@ -1,10 +1,8 @@
-import EnrollmentsDao from "./dao.js";
+import * as dao from "./dao.js";
 
-export default function EnrollmentRoutes(app, db) {
-  const dao = EnrollmentsDao(db);
-
-  const findAllEnrollments = (req, res) => {
-    const enrollments = dao.findAllEnrollments();
+export default function EnrollmentRoutes(app) {
+  const findAllEnrollments = async (req, res) => {
+    const enrollments = await dao.findAllEnrollments();
     res.json(enrollments);
   };
 

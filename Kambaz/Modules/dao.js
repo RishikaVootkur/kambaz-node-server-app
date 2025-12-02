@@ -1,32 +1,27 @@
 import { v4 as uuidv4 } from "uuid";
-import model from "../Courses/model.js";
+import model from "./model.js";
 
 export async function findModulesForCourse(courseId) {
-  const course = await model.findById(courseId);
-  return course.modules;
+  return model.find({ course: courseId });
 }
 
-export async function createModule(courseId, module) {
+export async function createModule(module) {
+  console.log("=== DAO createModule ===");
+  console.log("Received module:", module);
+  
   const newModule = { ...module, _id: uuidv4() };
-  const status = await model.updateOne(
-    { _id: courseId },
-    { $push: { modules: newModule } }
-  );
-  return newModule;
+  console.log("Creating module:", newModule);
+  
+  const created = await model.create(newModule);
+  console.log("MongoDB created:", created);
+  
+  return created;
 }
 
-export async function updateModule(courseId, moduleId, moduleUpdates) {
-  const course = await model.findById(courseId);
-  const module = course.modules.id(moduleId);
-  Object.assign(module, moduleUpdates);
-  await course.save();
-  return module;
+export async function updateModule(moduleId, moduleUpdates) {
+  return model.updateOne({ _id: moduleId }, { $set: moduleUpdates });
 }
 
-export async function deleteModule(courseId, moduleId) {
-  const status = await model.updateOne(
-    { _id: courseId },
-    { $pull: { modules: { _id: moduleId } } }
-  );
-  return status;
+export async function deleteModule(moduleId) {
+  return model.deleteOne({ _id: moduleId });
 }

@@ -52,25 +52,37 @@ export default function CourseRoutes(app) {
   };
 
   const createModuleForCourse = async (req, res) => {
+    console.log("=== ROUTE createModuleForCourse ===");
     const { courseId } = req.params;
+    console.log("courseId:", courseId);
+    console.log("req.body:", req.body);
+    
+    // Build the complete module object with name, course, etc.
     const module = {
       ...req.body,
       course: courseId,
     };
-    const newModule = await modulesDao.createModule(courseId, module);
+    console.log("Module object:", module);
+    
+    // FIXED: Pass only the module object (not courseId as first param)
+    const newModule = await modulesDao.createModule(module);
+    
+    console.log("Response:", newModule);
     res.send(newModule);
   };
 
   const deleteModule = async (req, res) => {
-    const { courseId, moduleId } = req.params;
-    const status = await modulesDao.deleteModule(courseId, moduleId);
+    // FIXED: moduleId is in params, not courseId and moduleId
+    const { moduleId } = req.params;
+    const status = await modulesDao.deleteModule(moduleId);
     res.send(status);
   };
 
   const updateModule = async (req, res) => {
-    const { courseId, moduleId } = req.params;
+    // FIXED: moduleId is in params, not courseId and moduleId  
+    const { moduleId } = req.params;
     const moduleUpdates = req.body;
-    const status = await modulesDao.updateModule(courseId, moduleId, moduleUpdates);
+    const status = await modulesDao.updateModule(moduleId, moduleUpdates);
     res.send(status);
   };
 

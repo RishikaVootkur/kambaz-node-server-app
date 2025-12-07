@@ -19,12 +19,10 @@ export default function QuizAttemptRoutes(app) {
         return;
       }
 
-      // Calculate maxScore from questions (NOT from quiz.points)
       const maxScore = quiz.questions?.reduce((sum, q) => sum + (q.points || 0), 0) || 0;
       
       const attemptCount = await dao.countAttempts(quizId, currentUser._id);
       
-      // Check if user has attempts remaining
       if (!quiz.multipleAttempts && attemptCount >= 1) {
         res.status(403).json({ message: "Only one attempt allowed" });
         return;
@@ -35,12 +33,10 @@ export default function QuizAttemptRoutes(app) {
         return;
       }
 
-      // Check for existing in-progress attempt
       const allAttempts = await dao.findAttemptsForQuiz(quizId, currentUser._id);
       const inProgressAttempt = allAttempts.find(a => !a.submittedAt);
       
       if (inProgressAttempt) {
-        // Return existing in-progress attempt instead of creating new one
         console.log(`📌 Returning existing in-progress attempt #${inProgressAttempt.attemptNumber}`);
         res.json(inProgressAttempt);
         return;
@@ -100,12 +96,15 @@ export default function QuizAttemptRoutes(app) {
         }
 
         let isCorrect = false;
+        let pointsEarned = 0;
 
         if (question.type === "MULTIPLE_CHOICE") {
           const correctChoice = question.choices.find(c => c.isCorrect);
           isCorrect = answer.answer === correctChoice?.text;
+          pointsEarned = isCorrect ? question.points : 0;
         } else if (question.type === "TRUE_FALSE") {
           isCorrect = answer.answer === question.correctAnswer;
+          pointsEarned = isCorrect ? question.points : 0;
         } else if (question.type === "FILL_BLANK") {
           const answerText = question.caseSensitive 
             ? answer.answer 
@@ -116,9 +115,53 @@ export default function QuizAttemptRoutes(app) {
               : possible.toLowerCase();
             return answerText === possibleText;
           });
+          pointsEarned = isCorrect ? question.points : 0;
+        } else if (question.type === "MULTIPLE_CHOICE_MULTIPLE_ANSWERS") {
+          const correctChoices = question.choices.filter(c => c.isCorrect).map(c => c.text).sort();
+          const userAnswers = Array.isArray(answer.answer) ? [...answer.answer].sort() : [];
+          
+          isCorrect = JSON.stringify(correctChoices) === JSON.stringify(userAnswers);
+          
+          if (!isCorrect && question.partialCredit) {
+            const correctSelected = userAnswers.filter(a => correctChoices.includes(a)).length;
+            const incorrectSelected = userAnswers.filter(a => !correctChoices.includes(a)).length;
+            const totalCorrect = correctChoices.length;
+            
+            if (correctSelected > 0 && incorrectSelected === 0) {
+              pointsEarned = (correctSelected / totalCorrect) * question.points;
+            }
+          } else {
+            pointsEarned = isCorrect ? question.points : 0;
+          }
+        } else if (question.type === "FILL_MULTIPLE_BLANKS") {
+          const userBlanks = answer.answer || {};
+          let correctBlanks = 0;
+          let totalBlanks = question.blanks.length;
+          
+          question.blanks.forEach(blank => {
+            const userAnswer = question.caseSensitive 
+              ? userBlanks[blank.blankId] 
+              : userBlanks[blank.blankId]?.toLowerCase();
+            
+            const isBlankCorrect = blank.possibleAnswers.some(possible => {
+              const possibleText = question.caseSensitive 
+                ? possible 
+                : possible.toLowerCase();
+              return userAnswer === possibleText;
+            });
+            
+            if (isBlankCorrect) correctBlanks++;
+          });
+          
+          isCorrect = correctBlanks === totalBlanks;
+          
+          if (question.partialCredit) {
+            pointsEarned = (correctBlanks / totalBlanks) * question.points;
+          } else {
+            pointsEarned = isCorrect ? question.points : 0;
+          }
         }
 
-        const pointsEarned = isCorrect ? question.points : 0;
         score += pointsEarned;
 
         return {
@@ -129,7 +172,6 @@ export default function QuizAttemptRoutes(app) {
         };
       });
 
-      // Calculate correct maxScore from current quiz questions
       const maxScore = quiz.questions.reduce((sum, q) => sum + (q.points || 0), 0);
 
       await dao.submitAttempt(attemptId, gradedAnswers, score, maxScore);

@@ -4,7 +4,7 @@ const questionSchema = new mongoose.Schema({
   _id: String,
   type: {
     type: String,
-    enum: ["MULTIPLE_CHOICE", "TRUE_FALSE", "FILL_BLANK"],
+    enum: ["MULTIPLE_CHOICE", "TRUE_FALSE", "FILL_BLANK", "MULTIPLE_CHOICE_MULTIPLE_ANSWERS", "FILL_MULTIPLE_BLANKS"],
     default: "MULTIPLE_CHOICE"
   },
   title: String,
@@ -16,7 +16,12 @@ const questionSchema = new mongoose.Schema({
   }],
   correctAnswer: Boolean,
   possibleAnswers: [String],
-  caseSensitive: { type: Boolean, default: false }
+  caseSensitive: { type: Boolean, default: false },
+  blanks: [{
+    blankId: String,
+    possibleAnswers: [String]
+  }],
+  partialCredit: { type: Boolean, default: false }
 });
 
 const quizSchema = new mongoose.Schema({
@@ -45,8 +50,8 @@ const quizSchema = new mongoose.Schema({
   webcamRequired: { type: Boolean, default: false },
   lockQuestionsAfterAnswering: { type: Boolean, default: false },
   viewResponses: { type: String, default: "ALWAYS" },
-requireRespondusLockDown: { type: Boolean, default: false },
-requiredToViewQuizResults: { type: Boolean, default: false },
+  requireRespondusLockDown: { type: Boolean, default: false },
+  requiredToViewQuizResults: { type: Boolean, default: false },
   dueDate: Date,
   availableDate: Date,
   untilDate: Date,

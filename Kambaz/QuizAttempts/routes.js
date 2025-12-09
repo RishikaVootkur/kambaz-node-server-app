@@ -178,7 +178,7 @@ export default function QuizAttemptRoutes(app) {
       
       const updatedAttempt = await dao.findAttemptById(attemptId);
       
-      console.log(`✅ Submitted attempt #${updatedAttempt.attemptNumber} - Score: ${score}/${maxScore}`);
+      console.log(`Submitted attempt #${updatedAttempt.attemptNumber} - Score: ${score}/${maxScore}`);
       
       res.json(updatedAttempt);
     } catch (error) {

@@ -21,23 +21,28 @@ export async function createQuiz(quiz) {
 }
 
 export async function updateQuiz(quizId, quizUpdates) {
-  const quiz = await model.findById(quizId);
+  const updatedQuiz = await model.findByIdAndUpdate(
+    quizId,
+    { $set: quizUpdates },
+    { new: true, runValidators: true }
+  );
   
-  if (!quiz) {
+  if (!updatedQuiz) {
     throw new Error("Quiz not found");
   }
 
-  Object.keys(quizUpdates).forEach(key => {
-    quiz[key] = quizUpdates[key];
-  });
-
   if (quizUpdates.questions) {
     const totalPoints = quizUpdates.questions.reduce((sum, q) => sum + (q.points || 0), 0);
-    quiz.points = totalPoints;
+    updatedQuiz.points = totalPoints;
+    
+    await model.updateOne(
+      { _id: quizId },
+      { $set: { points: totalPoints } }
+    );
+    updatedQuiz.points = totalPoints;
   }
 
-  await quiz.save();
-  return quiz;
+  return updatedQuiz;
 }
 
 export async function deleteQuiz(quizId) {
